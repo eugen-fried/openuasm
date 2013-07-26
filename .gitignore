@@ -1,3 +1,5 @@
 target
 nbproject
 gtest-1.*
+*.a
+*.o
