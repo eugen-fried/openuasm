@@ -9,7 +9,7 @@
 
 int data_area[2000] = {};
 int opr_area[2000] = {};
-int ic = 0, dc = 0;
+int ic = 100, dc = 0;
 SymbolTable symbol_table;
 
 /*
@@ -30,17 +30,13 @@ void first_pass() {
         if (is_meaningless_line(line)) {
             continue;
         }
-        /* Does this line has a label? (maybe replace it with inner function call)*/
-        if (has_label(line)) {
-            is_label = true;
-        }
 
         /* Get instruction from line (if exists)*/
-        instr = get_instr(line, is_label);
+        instr = get_instr(line);
         /* Handle data */
         if (instr == data || instr == string) {
-            if (is_label) {
-                add_symbol(get_label_name(line), dc++, false, false);
+            if (has_label(line)) {
+                add_symbol(get_label_name(line), dc, false, false);
             }
             if (instr == string) {
                 handle_string_instr(line);
@@ -95,11 +91,11 @@ void notify_error(char *msg, int line_num) {
     printf("%s\n", msg);
 }
 
-enum Instr get_instr(char *line, bool symbol) {
+int get_instr(char *line) {
     char *instr_tok, *garbage_line = copy_line(line);
 
     /*If has symbol, look in the second token*/
-    if (symbol) {
+    if (has_label(line)) {
         strtok(garbage_line, " ");
         instr_tok = strtok(NULL, " ");
     } else {
@@ -123,19 +119,130 @@ enum Instr get_instr(char *line, bool symbol) {
 
     /* Seems like there is no instruction*/
     free(garbage_line);
-    return none;
+    return NONE;
 
 }
 
-enum Action get_action(char *line) {
+int calc_code_length(char *line) {
+    enum Operation opert = get_operation(*line);
+    bool binary;
+
+    if (binary) {
+
+    }
+
+
+}
+
+int get_binary_length(char *line) {
+    int result = 0;
+    char *head;
+    Split *split = split_string(line, ',');
+    head = split -> head;
+
+
+}
+
+int get_single_operand_length(char *oper) {
+    /* Is it a register? */
+    if (get_register_code(oper) != INVALID) {
+        return 0;
+    }
+
+    /* ...or maybe immediate number? */
+    if (starts_with_char(oper, "#")) {
+        return 1;
+    }
+    /* so it should be an index call! */
+    int index_type = get_index_type(oper);
+
+}
+
+int get_index_type(char *oper) {
+    /* TODO: implement this*/
+}
+
+/* Parse register code from the operand. Returns INVALID if it's not a register. */
+int get_register_code(char *oper) {
+    char *copy, *copyp;
+    int result = INVALID;
+    
+    /* We want to be space tolerant, so copy the string and trim spaces*/
+    copy = (char *) malloc(strlen(oper) * sizeof (char));
+    strcpy(copy, oper);
+    copyp = copy;
+    copy = trim_whitespace(copy);
+    
+    int reg;
+    if (strlen(copy) != 2 || !starts_with_char(copy, 'r') || !isdigit(*(copy + 1))) {
+        free(copyp);
+        return INVALID;
+    }
+
+    reg = strtol((copy + 1), NULL, 0);
+    if (reg >= 0 && reg <= 7) {
+        result = reg;
+    }
+    
+    free(copyp);
+    return result;
+}
+
+/* We want to analyze the index expression (inside { })*/
+char *get_index_expr(char *oper, int *error) {
+    char *tmp = oper, *result, *index_expr;
+    bool started = false;
+    bool correct = false;
+    int size = 0;
+
+    while (*tmp != '\0') {
+        if (!started) {
+            if (*tmp == '{') {
+                started = true;
+                index_expr = tmp + 1;
+            }
+        } else {
+            /* We don't want to pass smth like {{ax}*/
+            if (*tmp == '{') {
+                *error = INVALID;
+                break;
+            }
+
+            size++;
+            if (*tmp == '}') {
+                correct = true;
+                started = false;
+                size--;
+            }
+        }
+
+        /* another pair? It's too much for us. */
+        if (correct && started) {
+            *error = INVALID;
+            break;
+        }
+        tmp++;
+    }
+
+    if (!started && !correct) {
+        *error = NONE;
+        return index_expr;
+    }
+
+    result = (char *) malloc((size + 1) * sizeof (char));
+    strlcpy(result, index_expr, size + 1);
+    return result;
+}
+
+int get_operation(char *line) {
     char *tok;
-    enum Action result;
+    int result;
     Split *split;
     line = remove_label(line);
-    
+
     split = split_string(line, ' ');
     tok = split -> head;
-    
+
 
     /* Could be replaced with some preprocessor magic, I do it if I'll have time */
     if (strcmp(tok, "mov") == 0) {
@@ -171,7 +278,7 @@ enum Action get_action(char *line) {
     } else if (strcmp(tok, "stop") == 0) {
         result = STOP;
     } else {
-        result =  NONE;
+        result = NONE;
     }
     free(split);
     return result;
@@ -285,7 +392,7 @@ void handle_data_instr(char *line) {
 
     while (tok != NULL) {
         tmp = strtol(tok, NULL, 0);
-        data_area[++dc] = tmp;
+        data_area[dc++] = tmp;
         strtok(NULL, ",");
     }
 }

@@ -22,10 +22,10 @@ USER_DIR = .
 
 # Target dir
 
-TARGET_DIR = ./taget
+TARGET_DIR = taget
 
 # Flags passed to the preprocessor.
-CPPFLAGS += -I$(GTEST_DIR)/include
+CPPFLAGS += -I$(GTEST_DIR)/include -fpermissive
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra
@@ -89,11 +89,11 @@ mystring_test.o : $(USER_DIR)/mystring_test.c \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/mystring_test.c
 
 mystring_test : mystring_test.o gtest_main.a -lpthread
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $(TARGET_DIR)/$@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $@
 	
 first_pass_test.o : $(USER_DIR)/first_pass_test.c \
                      $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/first_pass_test.c
 
 first_pass_test : first_pass_test.o gtest_main.a -lpthread
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $(TARGET_DIR)/$@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $@

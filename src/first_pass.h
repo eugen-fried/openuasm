@@ -15,13 +15,20 @@
 #define SYMBOLS_TABLE_SIZE 100
 #define STARTING_POINT 0x144
 
+
+#define NONE -1
+#define INVALID -10
 enum Instr {
-    data, string, entry, extrn, none
+    data, string, entry, extrn
 };
 
-enum Action {
-    MOV, CMP, ADD, SUB, NOT, CLR, LEA, INC, DEC, JMP, BNE, RED, PRN, JSR, RTS, STOP, NONE
+enum Operation {
+    MOV, CMP, ADD, SUB, NOT, CLR, LEA, INC, DEC, JMP, BNE, RED, PRN, JSR, RTS, STOP
 };
+
+/*enum IndexType {
+    IMMEDIATE, REFERENCE, REGISTER, NONE, INVALID;
+};*/
 
 typedef struct Symbol {
     char *name;
@@ -48,7 +55,7 @@ extern SymbolTable symbol_table;
 bool is_meaningless_line(char*);
 bool has_label(char*);
 void notify_error(char*, int);
-enum Instr get_instr(char*, bool);
+int get_instr(char*);
 char *copy_line(char*);
 char *get_label_name(char*);
 char *get_symbol_name(char*);
@@ -58,6 +65,9 @@ bool add_symbol(char*, int, bool, bool);
 void handle_string_instr(char*);
 void handle_data_instr(char*);
 void first_pass();
+int get_operation(char *);
+bool valid_index_oper(char*);
+int get_index_type(char *);
 
 
 

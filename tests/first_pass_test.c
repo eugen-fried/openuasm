@@ -51,24 +51,24 @@ TEST(FirstPass, get_instr) {
     char f[] = "some nonsense and white bears ";
     char g[] = "MOV ax, 125";
 
-    EXPECT_EQ(get_instr(a, true), string);
-    EXPECT_NE(get_instr(a, false), string);
-    
-    EXPECT_EQ(get_instr(b, false), data);
-    EXPECT_NE(get_instr(b, true), data);
-    
-    EXPECT_EQ(get_instr(c, true), data);
-    EXPECT_NE(get_instr(c, false), data);
-    
-    EXPECT_EQ(get_instr(d, false), entry);
-    
-    EXPECT_EQ(get_instr(e, false), extrn);
-    
-    EXPECT_EQ(get_instr(f, false), none);
-    EXPECT_EQ(get_instr(f, true), none);
-    
-    EXPECT_EQ(get_instr(g, false), none);
-    EXPECT_EQ(get_instr(g, true), none);
+    EXPECT_EQ(get_instr(a), string);
+    EXPECT_EQ(get_instr(a), string);
+
+    EXPECT_EQ(get_instr(b), data);
+    EXPECT_EQ(get_instr(b), data);
+
+    EXPECT_EQ(get_instr(c), data);
+    EXPECT_EQ(get_instr(c), data);
+
+    EXPECT_EQ(get_instr(d), entry);
+
+    EXPECT_EQ(get_instr(e), extrn);
+
+    EXPECT_EQ(get_instr(f), NONE);
+    EXPECT_EQ(get_instr(f), NONE);
+
+    EXPECT_EQ(get_instr(g), NONE);
+    EXPECT_EQ(get_instr(g), NONE);
 }
 
 TEST(FirstPass, remove_label) {
@@ -134,18 +134,60 @@ TEST(FirstPass, get_action) {
     char *s13 = {"prn dx"};
     char *s14 = {"jsr FUNC"};
 
-    EXPECT_EQ(get_action(s1), 0);
-    EXPECT_EQ(get_action(s2), 1);
-    EXPECT_EQ(get_action(s3), 2);
-    EXPECT_EQ(get_action(s4), 3);
-    EXPECT_EQ(get_action(s5), 6);
-    EXPECT_EQ(get_action(s6), 4);
-    EXPECT_EQ(get_action(s7), 5);
-    EXPECT_EQ(get_action(s8), 7);
-    EXPECT_EQ(get_action(s9), 8);
-    EXPECT_EQ(get_action(s10), 9);
-    EXPECT_EQ(get_action(s11), 10);
-    EXPECT_EQ(get_action(s12), 11);
-    EXPECT_EQ(get_action(s13), 12);
-    EXPECT_EQ(get_action(s14), 13);
+    EXPECT_EQ(get_operation(s1), 0);
+    EXPECT_EQ(get_operation(s2), 1);
+    EXPECT_EQ(get_operation(s3), 2);
+    EXPECT_EQ(get_operation(s4), 3);
+    EXPECT_EQ(get_operation(s5), 6);
+    EXPECT_EQ(get_operation(s6), 4);
+    EXPECT_EQ(get_operation(s7), 5);
+    EXPECT_EQ(get_operation(s8), 7);
+    EXPECT_EQ(get_operation(s9), 8);
+    EXPECT_EQ(get_operation(s10), 9);
+    EXPECT_EQ(get_operation(s11), 10);
+    EXPECT_EQ(get_operation(s12), 11);
+    EXPECT_EQ(get_operation(s13), 12);
+    EXPECT_EQ(get_operation(s14), 13);
 }
+
+TEST(FirstPass, get_index_expr) {
+    int error = 0;
+    char *result;
+    char *s1 = {"STRING{*LENGTH}"};
+    char *s2 = {"y{5}"};
+    char *s3 = {"ab{{c}}"};
+    char *s4 = {"r2"};
+
+    
+    result = get_index_expr(s1, &error);
+    EXPECT_EQ(error, 0);
+    EXPECT_STREQ(result, "*LENGTH");
+    
+    error = 0;
+    result = get_index_expr(s2, &error);
+    EXPECT_EQ(error, 0);
+    EXPECT_STREQ(result, "5");
+    
+    error = 0;
+    result = get_index_expr(s3, &error);
+    EXPECT_EQ(error, INVALID);
+    
+    error = 0;
+    result = get_index_expr(s4, &error);
+    EXPECT_EQ(error, NONE);
+}
+
+TEST(FirstPass, get_register_code) {
+    int error = 0;
+    char *result;
+    char *s1 = {"r1"};
+    char *s2 = {"r7"};
+    char *s3 = {"a1"};
+    char *s4 = {"r10"};
+    
+    EXPECT_EQ(get_register_code(s1), 1);
+    EXPECT_EQ(get_register_code(s2), 7);
+    EXPECT_EQ(get_register_code(s3), INVALID);
+    EXPECT_EQ(get_register_code(s4), INVALID);
+}
+    
