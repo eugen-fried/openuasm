@@ -106,3 +106,16 @@ size_t strlcpy(char *dst, const char *src, size_t siz) {
 
     return (s - src - 1); /* count does not include NUL */
 }
+
+/* Not memory safe removal of string part until first space char. 
+ * E.g make sandwich, ' ' -> sandwich */
+char *remove_before_space(char *line) {
+    char* copy = line;
+    while(*copy != '\0') {
+        if(isspace(*copy)) {
+            return copy + 1;
+        }
+        copy++;
+    }
+    return line;
+}

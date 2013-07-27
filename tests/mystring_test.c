@@ -41,3 +41,9 @@ TEST(Mystring, split_string) {
     result = split_string("Come together, right now", ' ');
     EXPECT_STREQ((result -> tail), "together, right now");
 }
+
+TEST(Mystring, remove_before_space) {
+    char s1[] = {"sudo make sandwich"};
+    
+    EXPECT_STREQ(remove_before_space(s1), "make sandwich");
+}

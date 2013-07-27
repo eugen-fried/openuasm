@@ -16,3 +16,4 @@ bool ends_with_char(const char *, char);
 char *trim_whitespace(char* );
 Split *split_string(const char*, char);
 size_t strlcpy(char*, const char*, size_t);
+char *remove_before_space(char*);
