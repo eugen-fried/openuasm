@@ -190,4 +190,35 @@ TEST(FirstPass, get_register_code) {
     EXPECT_EQ(get_register_code(s3), INVALID);
     EXPECT_EQ(get_register_code(s4), INVALID);
 }
+
+TEST(FirstPass, get_single_operand_length) {
+    char s1[] = {"r1"};
+    char s2[] = {"r7"};
+    char s3[] = {"a"};
+    char s4[] = {"y{10}"};
+    char s5[] = {"STR{*x}"};
+    char s6[] = {"WORD{r3}"};
+    char s7[] = {"#545"};
+    
+    
+    EXPECT_EQ(get_single_operand_length(s1), 0);
+    EXPECT_EQ(get_single_operand_length(s2), 0);
+    EXPECT_EQ(get_single_operand_length(s3), 1);
+    EXPECT_EQ(get_single_operand_length(s4), 2);
+    EXPECT_EQ(get_single_operand_length(s5), 2);
+    EXPECT_EQ(get_single_operand_length(s6), 1);
+    EXPECT_EQ(get_single_operand_length(s7), 1);
+}
+
+TEST(FirstPass, get_binary_length) {
+    char s1[] = {"mov #67, r2"};
+    char s2[] = {"add y, r0"};
+    char s3[] = {"cmp y{3}, #14"};
+    char s4[] = {"mov STRING{XYZ}, x"};
+    
+    EXPECT_EQ(get_binary_length(s1), 2);
+    EXPECT_EQ(get_binary_length(s2), 2);
+    EXPECT_EQ(get_binary_length(s3), 4);
+    EXPECT_EQ(get_binary_length(s4), 4);
+}
     

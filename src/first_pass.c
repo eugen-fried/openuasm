@@ -128,22 +128,26 @@ int calc_code_length(char *line) {
     bool binary;
 
     if (binary) {
-
+        get_binary_length(line);
     }
 
 
 }
 
 int get_binary_length(char *line) {
-    int result = 0;
-    char *head;
+    line = remove_before_space(line);
+    int result = 1;
     Split *split = split_string(line, ',');
-    head = split -> head;
-
-
+    
+    result += get_single_operand_length(split -> head);
+    result += get_single_operand_length(split -> tail);
+    
+    free(split);
+    return result;
 }
 
 int get_single_operand_length(char *oper) {
+    oper = trim_whitespace(oper);
     /* Is it a register? */
     if (get_register_code(oper) != INVALID) {
         return 0;
@@ -155,11 +159,34 @@ int get_single_operand_length(char *oper) {
     }
     /* so it should be an index call! */
     int index_type = get_index_type(oper);
-
+    if(index_type == REGISTER) {
+        return 1;
+    }
+    if (index_type == REFERENCE || index_type == IMMEDIATE) {
+        return 2;
+    }
+    
+    return 1;
 }
 
 int get_index_type(char *oper) {
-    /* TODO: implement this*/
+    int error = 0;
+    char *index_expr = get_index_expr(oper, &error);
+    
+    if(error == NONE || error == INVALID) {
+        return error;
+    }
+    
+    if (get_register_code(index_expr) != INVALID) {
+        return REGISTER;
+    }
+    
+    if(isdigit(index_expr)) {
+        return IMMEDIATE;
+    }
+    
+    return REFERENCE;
+    
 }
 
 /* Parse register code from the operand. Returns INVALID if it's not a register. */

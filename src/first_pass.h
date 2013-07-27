@@ -26,9 +26,9 @@ enum Operation {
     MOV, CMP, ADD, SUB, NOT, CLR, LEA, INC, DEC, JMP, BNE, RED, PRN, JSR, RTS, STOP
 };
 
-/*enum IndexType {
-    IMMEDIATE, REFERENCE, REGISTER, NONE, INVALID;
-};*/
+enum IndexType {
+    REGISTER, IMMEDIATE, REFERENCE 
+};
 
 typedef struct Symbol {
     char *name;
@@ -68,6 +68,10 @@ void first_pass();
 int get_operation(char *);
 bool valid_index_oper(char*);
 int get_index_type(char *);
+char *get_index_expr(char*, int*);
+int get_register_code(char *);
+int get_binary_length(char *line);
+int get_single_operand_length(char *oper);
 
 
 
