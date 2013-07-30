@@ -15,14 +15,14 @@ int main(int argc, char** argv){
 }
 
 void parse_arguments(int argc, char** argv){
-    if(argc == 0){
+    if(argc == 1){
         /* Seems like we don't have arguments */
         printf("%s\n", "There are no asm files to process, exiting.");
         exit(1);
     }
     int c = 0;
     
-    for(c = 0; c <= argc; c++) {
+    for(c = 1; c < argc; c++) {
         if(load_target_file(argv[c])){
             first_pass();
         }
