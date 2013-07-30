@@ -28,7 +28,8 @@ TARGET_DIR = taget
 CPPFLAGS += -I$(GTEST_DIR)/include -fpermissive
 
 # Flags passed to the C++ compiler.
-CXXFLAGS += -g -Wall -Wextra
+#CXXFLAGS += -g -Wall -Wextra
+CXXFLAGS += -g
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
