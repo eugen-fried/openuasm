@@ -22,7 +22,7 @@ void first_pass() {
     char line[100], *linep;
     while (!feof(target_file)) {
         
-        fscanf(target_file, "%s", line);
+        fgets(line, MAX_LINE_SIZE, target_file);
         /*Trim whitespace*/
         trim_whitespace(line);
 
@@ -53,7 +53,9 @@ int handle_operation(char *line) {
     if (get_operation(line) != NONE) {
         add_symbol(get_label_name(line), ic, false, false);
         ic += calc_code_length(line);
+        return 0;
     }
+    return -1;
 }
 
 int handle_instr(char *line) {
@@ -78,6 +80,11 @@ int handle_instr(char *line) {
             add_symbol(get_symbol_name(line), 0, true, true);
         }
     }
+    
+    if(instr != NONE) {
+        return 0;
+    }
+    return -1;
 }
 
 bool is_meaningless_line(char *line) {
@@ -286,6 +293,7 @@ char *get_index_expr(char *oper, int *error) {
     return result;
 }
 
+/* Get the operation */
 int get_operation(char *line) {
     char *tok;
     int result;
@@ -383,6 +391,7 @@ char *get_symbol_name(char *line) {
     return NULL;
 }
 
+/* Tear off the label after we used it*/
 char *remove_label(char *line) {
     if (has_label(line)) {
         line = strchr(line, ':');
@@ -391,6 +400,7 @@ char *remove_label(char *line) {
     return line;
 }
 
+/* Adds a symbol to the symbol table */
 bool add_symbol(char *name, int adress, bool is_extrn, bool has_inst) {
     Symbol *symbol = (Symbol *) malloc(sizeof (Symbol));
     symbol->name = name;
@@ -401,20 +411,23 @@ bool add_symbol(char *name, int adress, bool is_extrn, bool has_inst) {
     return true;
 }
 
+/* Insert string data into data area */
 void handle_string_instr(char *line) {
     char* data = get_string_data(line);
+    int i = 0;
     if (data == NULL) {
         return;
     }
 
     char curr_char = 0;
     do {
-        curr_char = *data;
+        curr_char = *(data + (i++));
         data_area[dc++] = curr_char;
     } while (curr_char != 0);
     free(data);
 }
 
+/* Parses the string data from input line */
 char *get_string_data(char *line) {
     line = remove_label(line);
     char *sec_tok, *result;
@@ -422,19 +435,23 @@ char *get_string_data(char *line) {
     split = split_string(line, ' ');
 
     sec_tok = split -> tail;
-
+    
+    /* Check whether it's a correct string */
     if (starts_with_char(sec_tok, '\"') && ends_with_char(sec_tok, '\"')) {
-        result = (char *) malloc(strlen(sec_tok) + 1);
-        strcpy(result, sec_tok);
+        result = (char *) malloc(strlen(sec_tok));
+        /* Copy without space */
+        strcpy(result, (++sec_tok));
         free(split);
-        result++;
-        *(result + (strlen(result) - 1)) = '\0';
+        /* Null terminate on last \" char */
+        size_t length = strlen(sec_tok) - 1;
+        result[length] = '\0';
         return result;
     }
     free(split);
     return NULL;
 }
 
+/* Insert numeric data into the data area*/
 void handle_data_instr(char *line) {
     int org_dc = dc, tmp;
     Split *split;
@@ -445,7 +462,7 @@ void handle_data_instr(char *line) {
     while (tok != NULL) {
         tmp = strtol(tok, NULL, 0);
         data_area[dc++] = tmp;
-        strtok(NULL, ",");
+        tok = strtok(NULL, ",");
     }
 }
 
