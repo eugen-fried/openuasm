@@ -72,7 +72,9 @@ char *get_index_expr(char*, int*);
 int get_register_code(char *);
 int get_binary_length(char *line);
 int get_single_operand_length(char *oper);
-
-
+void handle_error(int, char*);
+int handle_operation(char*);
+int handle_instr(char*);
+int calc_code_length(char*);
 
 

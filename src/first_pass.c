@@ -17,11 +17,11 @@ SymbolTable symbol_table;
  */
 void first_pass() {
     TAILQ_INIT(&(symbol_table.head));
-    bool is_label;
-    Symbol symbol;
-    enum Instr instr;
+    int error = 0, line_num = 0;
+    
     char line[100], *linep;
     while (!feof(target_file)) {
+        
         fscanf(target_file, "%s", line);
         /*Trim whitespace*/
         trim_whitespace(line);
@@ -30,29 +30,53 @@ void first_pass() {
         if (is_meaningless_line(line)) {
             continue;
         }
-
-        /* Get instruction from line (if exists)*/
-        instr = get_instr(line);
-        /* Handle data */
-        if (instr == data || instr == string) {
-            if (has_label(line)) {
-                add_symbol(get_label_name(line), dc, false, false);
-            }
-            if (instr == string) {
-                handle_string_instr(line);
-            } else if (instr == data) {
-                handle_data_instr(line);
-            }
-        } else if (instr == entry || instr == extrn) {
-            /*Handle extern and entry instructions*/
-            if (extrn) {
-                add_symbol(get_symbol_name(line), 0, true, false);
-            } else {
-                add_symbol(get_symbol_name(line), 0, true, false);
-            }
+        
+        error = handle_instr(line);
+        if(error == 0) {
+            continue;
+        } else if (error > 0) {
+            handle_error(error, line);
         }
 
+        error = handle_operation(line);
+        if (error == 0) {
+            continue;
+        } else if (error > 0) {
+            handle_error(error, line);
+        }
+        
+        line_num++;
+    }
+}
 
+int handle_operation(char *line) {
+    if (get_operation(line) != NONE) {
+        add_symbol(get_label_name(line), ic, false, false);
+        ic += calc_code_length(line);
+    }
+}
+
+int handle_instr(char *line) {
+    enum Instr instr;
+    /* Get instruction from line (if exists)*/
+    instr = get_instr(line);
+    /* Handle data */
+    if (instr == data || instr == string) {
+        if (has_label(line)) {
+            add_symbol(get_label_name(line), dc, false, true);
+        }
+        if (instr == string) {
+            handle_string_instr(line);
+        } else if (instr == data) {
+            handle_data_instr(line);
+        }
+    } else if (instr == entry || instr == extrn) {
+        /*Handle extern and entry instructions*/
+        if (extrn) {
+            add_symbol(get_symbol_name(line), 0, true, false);
+        } else {
+            add_symbol(get_symbol_name(line), 0, true, true);
+        }
     }
 }
 
@@ -71,16 +95,6 @@ bool is_meaningless_line(char *line) {
 
 bool has_label(char *line) {
     if (get_label_name(line) == NULL) {
-        return false;
-    }
-    return true;
-}
-
-bool validate_line(char *line, int line_num) {
-    char * first_tok;
-    first_tok = strtok(line, " ");
-    if (first_tok == NULL) {
-        notify_error("There are no recognizable tokens on this line, consult your assembler syntax user guide.", line_num);
         return false;
     }
     return true;
@@ -124,12 +138,22 @@ int get_instr(char *line) {
 }
 
 int calc_code_length(char *line) {
-    enum Operation opert = get_operation(*line);
-    bool binary;
+    enum Operation opert = get_operation(line);
+
+    if (opert == RTS || opert == STOP) {
+        return 1;
+    }
+
+    bool binary = (opert == MOV || opert == CMP ||
+            opert == ADD || opert == SUB ||
+            opert == LEA);
 
     if (binary) {
-        get_binary_length(line);
+        return get_binary_length(line);
     }
+
+    line = remove_before_space(line);
+    return 1 + get_single_operand_length(line);
 
 
 }
@@ -138,14 +162,15 @@ int get_binary_length(char *line) {
     line = remove_before_space(line);
     int result = 1;
     Split *split = split_string(line, ',');
-    
+
     result += get_single_operand_length(split -> head);
     result += get_single_operand_length(split -> tail);
-    
+
     free(split);
     return result;
 }
 
+/*How many steps we should advance the IC?*/
 int get_single_operand_length(char *oper) {
     oper = trim_whitespace(oper);
     /* Is it a register? */
@@ -154,52 +179,52 @@ int get_single_operand_length(char *oper) {
     }
 
     /* ...or maybe immediate number? */
-    if (starts_with_char(oper, "#")) {
+    if (starts_with_char(oper, '#')) {
         return 1;
     }
     /* so it should be an index call! */
     int index_type = get_index_type(oper);
-    if(index_type == REGISTER) {
+    if (index_type == REGISTER) {
         return 1;
     }
     if (index_type == REFERENCE || index_type == IMMEDIATE) {
         return 2;
     }
-    
+
     return 1;
 }
 
 int get_index_type(char *oper) {
     int error = 0;
     char *index_expr = get_index_expr(oper, &error);
-    
-    if(error == NONE || error == INVALID) {
+
+    if (error == NONE || error == INVALID) {
         return error;
     }
-    
+
     if (get_register_code(index_expr) != INVALID) {
         return REGISTER;
     }
-    
-    if(isdigit(index_expr)) {
+
+    if (isdigit(index_expr)) {
         return IMMEDIATE;
     }
-    
+
     return REFERENCE;
-    
+
 }
 
 /* Parse register code from the operand. Returns INVALID if it's not a register. */
 int get_register_code(char *oper) {
     char *copy, *copyp;
     int result = INVALID;
-    
+
     /* We want to be space tolerant, so copy the string and trim spaces*/
     copy = (char *) malloc(strlen(oper) * sizeof (char));
     strcpy(copy, oper);
     copyp = copy;
     copy = trim_whitespace(copy);
-    
+
     int reg;
     if (strlen(copy) != 2 || !starts_with_char(copy, 'r') || !isdigit(*(copy + 1))) {
         free(copyp);
@@ -210,7 +235,7 @@ int get_register_code(char *oper) {
     if (reg >= 0 && reg <= 7) {
         result = reg;
     }
-    
+
     free(copyp);
     return result;
 }
@@ -430,4 +455,8 @@ void rollback_data(int original_dc) {
     for (; dc > original_dc; dc--) {
         data_area[dc] = 0;
     }
+}
+
+void handle_error(int error, char *line) {
+    /*Do something with the error...*/
 }

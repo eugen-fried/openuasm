@@ -221,4 +221,18 @@ TEST(FirstPass, get_binary_length) {
     EXPECT_EQ(get_binary_length(s3), 4);
     EXPECT_EQ(get_binary_length(s4), 4);
 }
+
+TEST(FirstPass, calc_code_length) {
+    char s1[] = {"mov A, r1"};
+    char s2[] = {"cmp y{z}, #22"};
+    char s3[] = {"add y, r2"};
+    char s4[] = {"sub z, r7"};
+    char s5[] = {"lea z, #91"};
+
+    EXPECT_EQ(calc_code_length(s1), 2);
+    EXPECT_EQ(calc_code_length(s2), 4);
+    EXPECT_EQ(calc_code_length(s3), 2);
+    EXPECT_EQ(calc_code_length(s4), 2);
+    EXPECT_EQ(calc_code_length(s5), 3);
+}
     
