@@ -18,6 +18,9 @@
 
 #define NONE -1
 #define INVALID -10
+
+#ifndef FIRST_PASS
+#define FIRST_PASS
 enum Instr {
     data, string, entry, extrn
 };
@@ -48,6 +51,7 @@ extern int opr_area[2000];
 extern int dc, ic;
 extern SymbolTable symbol_table;
 
+#endif
 
 
 
@@ -71,10 +75,10 @@ int get_index_type(char *);
 char *get_index_expr(char*, int*);
 int get_register_code(char *);
 int get_binary_length(char *line);
-int get_single_operand_length(char *oper);
+int get_single_operand_length(char*);
 void handle_error(int, char*);
 int handle_operation(char*);
 int handle_instr(char*);
 int calc_code_length(char*);
-
+bool get_line(char*);
 

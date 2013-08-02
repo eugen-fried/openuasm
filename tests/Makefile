@@ -33,7 +33,7 @@ CXXFLAGS += -g
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = mystring_test first_pass_test
+TESTS = mystring_test first_pass_test second_pass_test
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -97,4 +97,11 @@ first_pass_test.o : $(USER_DIR)/first_pass_test.c \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/first_pass_test.c
 
 first_pass_test : first_pass_test.o gtest_main.a -lpthread
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $@
+
+second_pass_test.o : $(USER_DIR)/second_pass_test.c \
+                     $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/second_pass_test.c
+
+second_pass_test : second_pass_test.o gtest_main.a -lpthread
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS)  $^ -o $@

@@ -21,13 +21,7 @@ void first_pass() {
     
     char line[100], *linep;
     while (!feof(target_file)) {
-        
-        fgets(line, MAX_LINE_SIZE, target_file);
-        /*Trim whitespace*/
-        trim_whitespace(line);
-
-        /* Should we process the line? */
-        if (is_meaningless_line(line)) {
+        if(!get_line(line)) {
             continue;
         }
         
@@ -47,6 +41,19 @@ void first_pass() {
         
         line_num++;
     }
+}
+
+/* Get a line to process */
+bool get_line(char* line){
+    fgets(line, MAX_LINE_SIZE, target_file);
+    /*Trim whitespace*/
+    trim_whitespace(line);
+
+    /* Should we process the line? */
+    if (is_meaningless_line(line)) {
+        return false;
+    }
+    return true;
 }
 
 int handle_operation(char *line) {
