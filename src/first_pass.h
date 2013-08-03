@@ -44,7 +44,7 @@ typedef struct Operation {
     int dest_oprnd;
     int source_indx;
     int dest_index;
-};
+} Operation;
 
 extern int data_area[2000];
 extern int opr_area[2000];

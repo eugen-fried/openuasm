@@ -10,8 +10,7 @@ FILE *target_file;
 TEST(SecondPass, set_params) {
     char a[] = "mov/0,1";
     char b[] = "mov/1/0/1,0";
-    char c[] = "DATA: .data +7,-57,  17 , 9";
-    char d[] = ".entry HELLO";
+    
     bool type = false, dbl = false;
     int comb = 0;
     

@@ -101,8 +101,11 @@ TEST(FirstPass, add_symbol) {
     sglib_hashed_Symbol_init(symbol_table);
     char s1[] = "START";
     char s2[] = "END";
+    Symbol *result;
     add_symbol(s1, 0x144, false, true);
     add_symbol(s2, 0x164, true, false);
+    result = get_symbol_by_name(symbol_table, "END");
+    EXPECT_EQ(result -> address, 0x164);
     
 }
 

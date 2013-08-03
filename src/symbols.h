@@ -23,6 +23,7 @@ typedef struct Symbol {
 #define SYMBOL_COMPARATOR(e1, e2) (e1 -> address - e2 -> address)
 
 unsigned int symbol_hash_funct(Symbol*);
+Symbol *get_symbol_by_name(Symbol**, char*);
 
 SGLIB_DEFINE_LIST_PROTOTYPES(Symbol, SYMBOL_COMPARATOR, next)
 
