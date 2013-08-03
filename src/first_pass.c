@@ -10,13 +10,15 @@
 int data_area[2000] = {};
 int opr_area[2000] = {};
 int ic = 100, dc = 0;
-SymbolTable symbol_table;
+Symbol *symbol_table[HASH_TAB_SIZE];
+
+
 
 /*
  * 
  */
 void first_pass() {
-    TAILQ_INIT(&(symbol_table.head));
+    sglib_hashed_Symbol_init(symbol_table);
     int error = 0, line_num = 0;
     
     char line[100], *linep;
@@ -57,7 +59,7 @@ bool get_line(char* line){
 }
 
 int handle_operation(char *line) {
-    if (get_operation(line) != NONE) {
+    if (get_opert_type(line) != NONE) {
         add_symbol(get_label_name(line), ic, false, false);
         ic += calc_code_length(line);
         return 0;
@@ -152,24 +154,29 @@ int get_instr(char *line) {
 }
 
 int calc_code_length(char *line) {
-    enum Operation opert = get_operation(line);
+    enum OpertType opert = get_opert_type(line);
 
     if (opert == RTS || opert == STOP) {
         return 1;
     }
 
-    bool binary = (opert == MOV || opert == CMP ||
-            opert == ADD || opert == SUB ||
-            opert == LEA);
+    bool binary = is_binary_operation(opert);
 
     if (binary) {
         return get_binary_length(line);
     }
 
     line = remove_before_space(line);
-    return 1 + get_single_operand_length(line);
+    return 1 + get_single_operand_info(line, NULL, NULL);
 
 
+}
+
+bool is_binary_operation(enum OpertType opert) {
+    bool binary = (opert == MOV || opert == CMP ||
+            opert == ADD || opert == SUB ||
+            opert == LEA);
+    return binary;
 }
 
 int get_binary_length(char *line) {
@@ -177,46 +184,66 @@ int get_binary_length(char *line) {
     int result = 1;
     Split *split = split_string(line, ',');
 
-    result += get_single_operand_length(split -> head);
-    result += get_single_operand_length(split -> tail);
+    result += get_single_operand_info(split -> head, NULL, NULL);
+    result += get_single_operand_info(split -> tail, NULL, NULL);
 
     free(split);
     return result;
 }
 
-/*How many steps we should advance the IC?*/
-int get_single_operand_length(char *oper) {
+/* It returns the L for current opperand. 
+ * reg holds the register number and adr adresation method*/
+int get_single_operand_info(char *oper, int *reg, int *adr) {
+    /* "Elegant" (just like Fiat Multipla) solution to overriding/default args */
+    int mock;
+    if(reg == NULL) {
+        reg = & mock;
+    }
+    if (adr == NULL) {
+        adr = &mock;
+    }
+    
     oper = trim_whitespace(oper);
     /* Is it a register? */
-    if (get_register_code(oper) != INVALID) {
+    *reg = get_register_code(oper);
+    if (*reg != INVALID) {
+        *adr = 3;
         return 0;
     }
 
     /* ...or maybe immediate number? */
     if (starts_with_char(oper, '#')) {
+        *adr = 0;
         return 1;
     }
     /* so it should be an index call! */
-    int index_type = get_index_type(oper);
+    int index_type = get_index_type(oper, reg);
     if (index_type == REGISTER) {
+        *adr = 2;
         return 1;
     }
     if (index_type == REFERENCE || index_type == IMMEDIATE) {
+        *adr = 2;
         return 2;
     }
 
+    *adr = 1;
     return 1;
 }
 
-int get_index_type(char *oper) {
-    int error = 0;
+int get_index_type(char *oper, int *reg) {
+    int error = 0, mock;
+    if(reg == NULL) {
+        reg = mock;
+    }
     char *index_expr = get_index_expr(oper, &error);
 
     if (error == NONE || error == INVALID) {
         return error;
     }
 
-    if (get_register_code(index_expr) != INVALID) {
+    reg = get_register_code(index_expr);
+    if (reg != INVALID) {
         return REGISTER;
     }
 
@@ -301,7 +328,7 @@ char *get_index_expr(char *oper, int *error) {
 }
 
 /* Get the operation */
-int get_operation(char *line) {
+int get_opert_type(char *line) {
     char *tok;
     int result;
     Split *split;
@@ -414,7 +441,7 @@ bool add_symbol(char *name, int adress, bool is_extrn, bool has_inst) {
     symbol->address = adress;
     symbol->is_extern = is_extrn;
     symbol->has_inst = has_inst;
-    TAILQ_INSERT_TAIL(&(symbol_table.head), symbol, pointers);
+    sglib_hashed_Symbol_add(symbol_table, symbol);
     return true;
 }
 
@@ -484,3 +511,4 @@ void rollback_data(int original_dc) {
 void handle_error(int error, char *line) {
     /*Do something with the error...*/
 }
+

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include "io.h"
 #include "mystring.h"
-#include "../lib/queue.h"
+#include "symbols.h"
 #define MAX_LINE_SIZE 100
 #define SYMBOLS_TABLE_SIZE 100
 #define STARTING_POINT 0x144
@@ -21,35 +21,35 @@
 
 #ifndef FIRST_PASS
 #define FIRST_PASS
+
 enum Instr {
     data, string, entry, extrn
 };
 
-enum Operation {
+enum OpertType {
     MOV, CMP, ADD, SUB, NOT, CLR, LEA, INC, DEC, JMP, BNE, RED, PRN, JSR, RTS, STOP
 };
 
 enum IndexType {
-    REGISTER, IMMEDIATE, REFERENCE 
+    REGISTER, IMMEDIATE, REFERENCE
 };
 
-typedef struct Symbol {
-    char *name;
-    int address;
-    bool is_extern;
-    bool has_inst;
-    TAILQ_ENTRY(Symbol) pointers;
-} Symbol;
 
-typedef struct SymbolTable {
-    TAILQ_HEAD(symbol_table, Symbol) head;
-} SymbolTable;
 
+typedef struct Operation {
+    enum OpertType opertType;
+    bool dbl, type;
+    int cmb, dest_reg, dest_adr, source_reg, source_adr;
+    int source_oprnd;
+    int dest_oprnd;
+    int source_indx;
+    int dest_index;
+};
 
 extern int data_area[2000];
 extern int opr_area[2000];
 extern int dc, ic;
-extern SymbolTable symbol_table;
+extern Symbol *symbol_table[HASH_TAB_SIZE];
 
 #endif
 
@@ -69,16 +69,16 @@ bool add_symbol(char*, int, bool, bool);
 void handle_string_instr(char*);
 void handle_data_instr(char*);
 void first_pass();
-int get_operation(char *);
+int get_opert_type(char *);
 bool valid_index_oper(char*);
-int get_index_type(char *);
+int get_index_type(char *, int*);
 char *get_index_expr(char*, int*);
 int get_register_code(char *);
 int get_binary_length(char *line);
-int get_single_operand_length(char*);
+int get_single_operand_info(char*, int*, int*);
 void handle_error(int, char*);
 int handle_operation(char*);
 int handle_instr(char*);
 int calc_code_length(char*);
 bool get_line(char*);
-
+bool is_binary_operation(enum OpertType);

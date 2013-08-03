@@ -1,7 +1,7 @@
 #include "../src/mystring.c"
+#include "../src/symbols.c"
 #include "../src/first_pass.c"
 #include <gtest/gtest.h>
-#include "../lib/queue.h"
 #include <string.h>
 
 
@@ -98,7 +98,7 @@ TEST(FirstPass, get_symbol_name) {
 }
 
 TEST(FirstPass, add_symbol) {
-    TAILQ_INIT(&(symbol_table.head));
+    sglib_hashed_Symbol_init(symbol_table);
     char s1[] = "START";
     char s2[] = "END";
     add_symbol(s1, 0x144, false, true);
@@ -118,7 +118,7 @@ TEST(FirstPass, get_string_data) {
     EXPECT_STREQ(get_string_data(s4), NULL);
 }
 
-TEST(FirstPass, get_action) {
+TEST(FirstPass, get_opert_type) {
     char *s1 = {"mov ax, 27"};
     char *s2 = {"cmp x, -5"};
     char *s3 = {"FUNC: add dx, 275"};
@@ -134,20 +134,20 @@ TEST(FirstPass, get_action) {
     char *s13 = {"prn dx"};
     char *s14 = {"jsr FUNC"};
 
-    EXPECT_EQ(get_operation(s1), 0);
-    EXPECT_EQ(get_operation(s2), 1);
-    EXPECT_EQ(get_operation(s3), 2);
-    EXPECT_EQ(get_operation(s4), 3);
-    EXPECT_EQ(get_operation(s5), 6);
-    EXPECT_EQ(get_operation(s6), 4);
-    EXPECT_EQ(get_operation(s7), 5);
-    EXPECT_EQ(get_operation(s8), 7);
-    EXPECT_EQ(get_operation(s9), 8);
-    EXPECT_EQ(get_operation(s10), 9);
-    EXPECT_EQ(get_operation(s11), 10);
-    EXPECT_EQ(get_operation(s12), 11);
-    EXPECT_EQ(get_operation(s13), 12);
-    EXPECT_EQ(get_operation(s14), 13);
+    EXPECT_EQ(get_opert_type(s1), 0);
+    EXPECT_EQ(get_opert_type(s2), 1);
+    EXPECT_EQ(get_opert_type(s3), 2);
+    EXPECT_EQ(get_opert_type(s4), 3);
+    EXPECT_EQ(get_opert_type(s5), 6);
+    EXPECT_EQ(get_opert_type(s6), 4);
+    EXPECT_EQ(get_opert_type(s7), 5);
+    EXPECT_EQ(get_opert_type(s8), 7);
+    EXPECT_EQ(get_opert_type(s9), 8);
+    EXPECT_EQ(get_opert_type(s10), 9);
+    EXPECT_EQ(get_opert_type(s11), 10);
+    EXPECT_EQ(get_opert_type(s12), 11);
+    EXPECT_EQ(get_opert_type(s13), 12);
+    EXPECT_EQ(get_opert_type(s14), 13);
 }
 
 TEST(FirstPass, get_index_expr) {
@@ -200,14 +200,30 @@ TEST(FirstPass, get_single_operand_length) {
     char s6[] = {"WORD{r3}"};
     char s7[] = {"#545"};
     
+    int reg = -10, adr;
     
-    EXPECT_EQ(get_single_operand_length(s1), 0);
-    EXPECT_EQ(get_single_operand_length(s2), 0);
-    EXPECT_EQ(get_single_operand_length(s3), 1);
-    EXPECT_EQ(get_single_operand_length(s4), 2);
-    EXPECT_EQ(get_single_operand_length(s5), 2);
-    EXPECT_EQ(get_single_operand_length(s6), 1);
-    EXPECT_EQ(get_single_operand_length(s7), 1);
+    EXPECT_EQ(get_single_operand_info(s1, NULL, NULL), 0);
+    EXPECT_EQ(get_single_operand_info(s2, &reg, &adr), 0);
+    EXPECT_EQ(reg, 7);
+    EXPECT_EQ(adr, 3);
+    reg = -10; adr = 0;
+    
+    
+    EXPECT_EQ(get_single_operand_info(s3, &reg, &adr), 1);
+    EXPECT_EQ(reg, -10);
+    EXPECT_EQ(adr, 1);
+    reg = -10;
+    adr = 0;
+    
+    EXPECT_EQ(get_single_operand_info(s4, NULL, NULL), 2);
+    EXPECT_EQ(get_single_operand_info(s5, NULL, NULL), 2);
+    EXPECT_EQ(get_single_operand_info(s6, NULL, NULL), 1);
+    
+    EXPECT_EQ(get_single_operand_info(s7, &reg, &adr), 1);
+    EXPECT_EQ(reg, -10);
+    EXPECT_EQ(adr, 0);
+    reg = -1;
+    adr = 0;
 }
 
 TEST(FirstPass, get_binary_length) {
