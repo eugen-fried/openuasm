@@ -9,10 +9,8 @@
 
 int data_area[2000] = {};
 int opr_area[2000] = {};
-int ic = 100, dc = 0;
+int ic = 0, dc = 0;
 Symbol *symbol_table[HASH_TAB_SIZE];
-
-
 
 /*
  * 
@@ -20,15 +18,15 @@ Symbol *symbol_table[HASH_TAB_SIZE];
 void first_pass() {
     sglib_hashed_Symbol_init(symbol_table);
     int error = 0, line_num = 0;
-    
+
     char line[100], *linep;
     while (!feof(target_file)) {
-        if(!get_line(line)) {
+        if (!get_line(line)) {
             continue;
         }
-        
+
         error = handle_instr(line);
-        if(error == 0) {
+        if (error == 0) {
             continue;
         } else if (error > 0) {
             handle_error(error, line);
@@ -40,13 +38,14 @@ void first_pass() {
         } else if (error > 0) {
             handle_error(error, line);
         }
-        
+
         line_num++;
     }
+    rewind(target_file);
 }
 
 /* Get a line to process */
-bool get_line(char* line){
+bool get_line(char* line) {
     fgets(line, MAX_LINE_SIZE, target_file);
     /*Trim whitespace*/
     trim_whitespace(line);
@@ -60,7 +59,9 @@ bool get_line(char* line){
 
 int handle_operation(char *line) {
     if (get_opert_type(line) != NONE) {
-        add_symbol(get_label_name(line), ic, false, false);
+        if (has_label(line)) {
+            add_symbol(get_label_name(line), ic, false, false);
+        }
         ic += calc_code_length(line);
         return 0;
     }
@@ -89,8 +90,8 @@ int handle_instr(char *line) {
             add_symbol(get_symbol_name(line), 0, true, true);
         }
     }
-    
-    if(instr != NONE) {
+
+    if (instr != NONE) {
         return 0;
     }
     return -1;
@@ -196,13 +197,13 @@ int get_binary_length(char *line) {
 int get_single_operand_info(char *oper, int *reg, int *adr) {
     /* "Elegant" (just like Fiat Multipla) solution to overriding/default args */
     int mock;
-    if(reg == NULL) {
-        reg = & mock;
+    if (reg == NULL) {
+        reg = &mock;
     }
     if (adr == NULL) {
         adr = &mock;
     }
-    
+
     oper = trim_whitespace(oper);
     /* Is it a register? */
     *reg = get_register_code(oper);
@@ -233,7 +234,7 @@ int get_single_operand_info(char *oper, int *reg, int *adr) {
 
 int get_index_type(char *oper, int *reg) {
     int error = 0, mock;
-    if(reg == NULL) {
+    if (reg == NULL) {
         reg = mock;
     }
     char *index_expr = get_index_expr(oper, &error);
@@ -333,6 +334,13 @@ int get_opert_type(char *line) {
     int result;
     Split *split;
     line = remove_label(line);
+    
+    if(is_stop_opert(line)) {
+        return STOP;
+    }
+    if (is_rts_opert(line)) {
+        return RTS;
+    }
 
     split = split_string(line, ' ');
     tok = split -> head;
@@ -367,17 +375,34 @@ int get_opert_type(char *line) {
         result = PRN;
     } else if (strcmp(tok, "jsr") == 0) {
         result = JSR;
-    } else if (strcmp(tok, "rts") == 0) {
-        result = RTS;
-    } else if (strcmp(tok, "stop") == 0) {
-        result = STOP;
+
     } else {
         result = NONE;
     }
     free(split);
     return result;
 }
+bool is_stop_opert(char *line) {
+    bool result = false;
+    char *tok = malloc(5 * sizeof(char));
+    strlcpy(tok, line, 4);
+    if(strcmp(tok, "stop") == 0) {
+        result = true;
+    }
+    free(tok);
+    return result;
+}
 
+bool is_rts_opert(char *line) {
+    bool result = false;
+    char *tok = malloc(4 * sizeof (char));
+    strlcpy(tok, line, 3);
+    if (strcmp(tok, "rts") == 0) {
+        result = true;
+    }
+    free(tok);
+    return result;
+}
 /*Damned strtok string modification, maybe I should've written my own tokenizer?*/
 char *copy_line(char *line) {
     char *result;
@@ -469,7 +494,7 @@ char *get_string_data(char *line) {
     split = split_string(line, ' ');
 
     sec_tok = split -> tail;
-    
+
     /* Check whether it's a correct string */
     if (starts_with_char(sec_tok, '\"') && ends_with_char(sec_tok, '\"')) {
         result = (char *) malloc(strlen(sec_tok));

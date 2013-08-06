@@ -26,4 +26,3 @@ TEST(SecondPass, set_params) {
     EXPECT_EQ(type, true);
     EXPECT_EQ(comb, 1);
 }
-

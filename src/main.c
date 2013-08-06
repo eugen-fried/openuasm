@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include "io.h"
 #include "first_pass.h"
+#include "second_pass.h"
 
 
 void parse_arguments(int, char**);
+void preview_result();
 
 
 int main(int argc, char** argv){
@@ -25,8 +27,17 @@ void parse_arguments(int argc, char** argv){
     for(c = 1; c < argc; c++) {
         if(load_target_file(argv[c])){
             first_pass();
+            second_pass();
+            preview_result();
         }
         
     }
     
+}
+
+void preview_result() {
+    int i;
+    for(i = 0; i < (ic + dc); i++) {
+        printf("%o\n", opr_area[i]);
+    }
 }

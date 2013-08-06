@@ -43,7 +43,8 @@ typedef struct Operation {
     int source_oprnd;
     int dest_oprnd;
     int source_indx;
-    int dest_index;
+    int dest_indx;
+    int length;
 } Operation;
 
 extern int data_area[2000];
@@ -81,4 +82,6 @@ int handle_operation(char*);
 int handle_instr(char*);
 int calc_code_length(char*);
 bool get_line(char*);
+bool is_stop_opert(char*);
+bool is_rts_opert(char* line);
 bool is_binary_operation(enum OpertType);
