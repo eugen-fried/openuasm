@@ -3,9 +3,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 FILE* target_file = NULL;
 
+/* Load the as code file */
 bool load_target_file(char* file_name) {
     char* full_file_name = strcat(file_name, ".as");
     target_file = fopen(full_file_name, "r");
@@ -16,11 +18,10 @@ bool load_target_file(char* file_name) {
     return true;
 }
 
-int save_ob_file(int *result, int ic, int dc){
-    int length = ic + dc, i;
-    /* Open file for writing*/
-    for(i = 0x144; i <= length; i++, result++) {
-        /* Write in format i         *result*/
-    }
-    /* Don't forget to close the stream */
+int save_ob_file(char* file_name) {
+    char* out_file_name = malloc(sizeof(char) * (strlen(file_name) + 3));
+    strcat(out_file_name, ".ob");
+    FILE *out = fopen(out_file_name, "w");
+    fclose(out);
+    return 0;
 }

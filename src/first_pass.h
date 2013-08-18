@@ -22,6 +22,7 @@
 #ifndef FIRST_PASS
 #define FIRST_PASS
 
+/* Enumeration types */
 enum Instr {
     data, string, entry, extrn
 };
@@ -35,7 +36,7 @@ enum IndexType {
 };
 
 
-
+/* Requred information about an operation */
 typedef struct Operation {
     enum OpertType opertType;
     bool dbl, type;
@@ -44,7 +45,6 @@ typedef struct Operation {
     int dest_oprnd;
     int source_indx;
     int dest_indx;
-    int length;
 } Operation;
 
 extern int data_area[2000];

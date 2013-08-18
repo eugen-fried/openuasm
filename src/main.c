@@ -17,6 +17,7 @@ int main(int argc, char** argv){
 }
 
 void parse_arguments(int argc, char** argv){
+    char *file_name;
     if(argc == 1){
         /* Seems like we don't have arguments */
         printf("%s\n", "There are no asm files to process, exiting.");
@@ -25,10 +26,13 @@ void parse_arguments(int argc, char** argv){
     int c = 0;
     
     for(c = 1; c < argc; c++) {
+        
         if(load_target_file(argv[c])){
+            file_name = argv[c];
             first_pass();
             second_pass();
             preview_result();
+            save_ob_file(file_name);
         }
         
     }

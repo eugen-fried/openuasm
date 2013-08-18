@@ -47,3 +47,9 @@ TEST(Mystring, remove_before_space) {
     
     EXPECT_STREQ(remove_before_space(s1), "make sandwich");
 }
+
+TEST(Mystring, remove_inner_spaces) {
+    char s1[] = {"Twas  brillig,                 and the   \"slithy toves\""};
+    
+    EXPECT_STREQ(remove_inner_spaces(s1), "Twas brillig, and the slithy toves");
+}

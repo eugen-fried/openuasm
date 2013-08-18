@@ -119,3 +119,7 @@ char *remove_before_space(char *line) {
     }
     return line;
 }
+
+remove_inner_spaces(char *str) {
+    
+}

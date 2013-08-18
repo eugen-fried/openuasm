@@ -13,13 +13,13 @@ int ic = 0, dc = 0;
 Symbol *symbol_table[HASH_TAB_SIZE];
 
 /*
- * 
+ * First pass over the code
  */
 void first_pass() {
     sglib_hashed_Symbol_init(symbol_table);
     int error = 0, line_num = 0;
 
-    char line[100], *linep;
+    char line[100];
     while (!feof(target_file)) {
         if (!get_line(line)) {
             continue;
@@ -57,6 +57,7 @@ bool get_line(char* line) {
     return true;
 }
 
+/* Advance IC for required code length */
 int handle_operation(char *line) {
     if (get_opert_type(line) != NONE) {
         if (has_label(line)) {
@@ -68,6 +69,7 @@ int handle_operation(char *line) {
     return -1;
 }
 
+/* Advance dc for required length */
 int handle_instr(char *line) {
     enum Instr instr;
     /* Get instruction from line (if exists)*/
@@ -97,6 +99,7 @@ int handle_instr(char *line) {
     return -1;
 }
 
+/* Should we process this line? */
 bool is_meaningless_line(char *line) {
     /*Check for empty string*/
     if (is_empty_string(line)) {
@@ -110,6 +113,7 @@ bool is_meaningless_line(char *line) {
     return false;
 }
 
+/* Does this line contains label? */
 bool has_label(char *line) {
     if (get_label_name(line) == NULL) {
         return false;
@@ -122,6 +126,7 @@ void notify_error(char *msg, int line_num) {
     printf("%s\n", msg);
 }
 
+/* Get instruction from line */
 int get_instr(char *line) {
     char *instr_tok, *garbage_line = copy_line(line);
 
@@ -154,6 +159,7 @@ int get_instr(char *line) {
 
 }
 
+/* Get IC length for an operation */
 int calc_code_length(char *line) {
     enum OpertType opert = get_opert_type(line);
 
@@ -173,6 +179,7 @@ int calc_code_length(char *line) {
 
 }
 
+/* Do we have two operands? */
 bool is_binary_operation(enum OpertType opert) {
     bool binary = (opert == MOV || opert == CMP ||
             opert == ADD || opert == SUB ||
@@ -180,6 +187,7 @@ bool is_binary_operation(enum OpertType opert) {
     return binary;
 }
 
+/* Calculate IC length for two operands */
 int get_binary_length(char *line) {
     line = remove_before_space(line);
     int result = 1;
@@ -232,10 +240,11 @@ int get_single_operand_info(char *oper, int *reg, int *adr) {
     return 1;
 }
 
+/* Get index type if it is an array operand */
 int get_index_type(char *oper, int *reg) {
-    int error = 0, mock;
+    int error = 0, mock = 0;
     if (reg == NULL) {
-        reg = mock;
+        *reg = mock;
     }
     char *index_expr = get_index_expr(oper, &error);
 
@@ -243,8 +252,8 @@ int get_index_type(char *oper, int *reg) {
         return error;
     }
 
-    reg = get_register_code(index_expr);
-    if (reg != INVALID) {
+    *reg = get_register_code(index_expr);
+    if (*reg != INVALID) {
         return REGISTER;
     }
 
@@ -332,18 +341,17 @@ char *get_index_expr(char *oper, int *error) {
 int get_opert_type(char *line) {
     char *tok;
     int result;
-    Split *split;
     line = remove_label(line);
-    
-    if(is_stop_opert(line)) {
+
+    if (is_stop_opert(line)) {
         return STOP;
     }
     if (is_rts_opert(line)) {
         return RTS;
     }
 
-    split = split_string(line, ' ');
-    tok = split -> head;
+    tok = malloc(4 * sizeof (char));
+    strlcpy(tok, line, 4);
 
 
     /* Could be replaced with some preprocessor magic, I do it if I'll have time */
@@ -379,14 +387,15 @@ int get_opert_type(char *line) {
     } else {
         result = NONE;
     }
-    free(split);
+    free(tok);
     return result;
 }
+
 bool is_stop_opert(char *line) {
     bool result = false;
-    char *tok = malloc(5 * sizeof(char));
-    strlcpy(tok, line, 4);
-    if(strcmp(tok, "stop") == 0) {
+    char *tok = malloc(5 * sizeof (char));
+    strlcpy(tok, line, 5);
+    if (strcmp(tok, "stop") == 0) {
         result = true;
     }
     free(tok);
@@ -396,13 +405,14 @@ bool is_stop_opert(char *line) {
 bool is_rts_opert(char *line) {
     bool result = false;
     char *tok = malloc(4 * sizeof (char));
-    strlcpy(tok, line, 3);
+    strlcpy(tok, line, 4);
     if (strcmp(tok, "rts") == 0) {
         result = true;
     }
     free(tok);
     return result;
 }
+
 /*Damned strtok string modification, maybe I should've written my own tokenizer?*/
 char *copy_line(char *line) {
     char *result;
@@ -512,7 +522,7 @@ char *get_string_data(char *line) {
 
 /* Insert numeric data into the data area*/
 void handle_data_instr(char *line) {
-    int org_dc = dc, tmp;
+    int tmp;
     Split *split;
     line = remove_label(line);
     split = split_string(line, ' ');
